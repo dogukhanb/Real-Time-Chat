@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
-const { Console } = require("console");
 
 const app = express();
 app.use(cors());
@@ -15,18 +14,27 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
+
 io.on("connection", (socket) => {
-  console.log(socket.id);
-  socket.on("room", (data) => {
-    socket.join(data);
+  console.log(`New client connected: ${socket.id}`);
+
+  socket.on("joinRoom", (room) => {
+    console.log(`Socket ${socket.id} joining room: ${room}`);
+    socket.join(room);
   });
+
   socket.on("message", (data) => {
+    console.log(`Message received from ${socket.id}:`, data);
     socket.to(data.room).emit("messageReturn", data);
+  });
+
+  socket.on("disconnect", () => {
+    console.log(`Client disconnected: ${socket.id}`);
   });
 });
 
 const PORT = 8000;
 
 server.listen(PORT, () => {
-  console.log("server is running on port: 8000");
+  console.log(`Server is running on port: ${PORT}`);
 });

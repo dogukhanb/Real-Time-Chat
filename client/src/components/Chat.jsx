@@ -5,26 +5,40 @@ const Chat = ({ socket, username, room }) => {
   const [messageList, setMessageList] = useState([]);
 
   useEffect(() => {
+    console.log("Joining room:", room);
+    socket.emit("joinRoom", room);
+
     socket.on("messageReturn", (data) => {
+      console.log("Received messageReturn:", data);
       setMessageList((prev) => [...prev, data]);
     });
-  }, [socket]);
+
+    // Clean up the effect
+    return () => {
+      socket.off("messageReturn");
+    };
+  }, [socket, room]);
 
   const sendMessage = async () => {
+    if (message.trim() === "") return;
+
     const messageContent = {
-      username: username,
-      message: message,
-      room: room,
+      username,
+      message,
+      room,
       date:
         new Date(Date.now()).getHours() +
         ":" +
         new Date(Date.now()).getMinutes(),
     };
+
+    console.log("Sending message:", messageContent);
     await socket.emit("message", messageContent);
     setMessageList((prev) => [...prev, messageContent]);
     setMessage("");
   };
 
+  console.log("messageList", messageList);
   return (
     <div className="flex items-center justify-center h-full">
       <div className="w-1/3 h-[600px] rounded-lg bg-white relative">
@@ -43,7 +57,7 @@ const Chat = ({ socket, username, room }) => {
                 <div
                   className={`${
                     username === msg.username ? "bg-green-600" : "bg-blue-600"
-                  } w-2/3 h-12  text-white m-2 p-2 rounded-br-none rounded-xl`}
+                  } w-2/3 h-12 text-white m-2 p-2 rounded-br-none rounded-xl`}
                 >
                   <div>{msg.message}</div>
                   <div className="w-full flex justify-end text-xs">
